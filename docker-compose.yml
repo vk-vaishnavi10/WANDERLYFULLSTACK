@@ -1,0 +1,40 @@
+version: "3.8"
+
+services:
+  wanderly-frontend:
+    build:
+      context: ./travel       # ✅ points to the folder where Dockerfile-frontend is
+      dockerfile: Dockerfile-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - wanderly-backend
+    restart: always
+
+  wanderly-backend:
+    build:
+      context: ./wanderly     # ✅ where your backend Dockerfile is
+      dockerfile: Dockerfile-backend
+    ports:
+      - "8085:8085"
+    depends_on:
+      - wanderly-mysql
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://wanderly-mysql:3306/wanderly?createDatabaseIfNotExist=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: Vai@091005#
+    restart: always
+
+  wanderly-mysql:
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: Vai@091005#
+      MYSQL_DATABASE: wanderly
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    restart: always
+
+volumes:
+  db_data:
