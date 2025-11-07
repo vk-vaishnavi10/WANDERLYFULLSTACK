@@ -1,30 +1,50 @@
 version: "3.8"
 
 services:
+  # ===============================
+  # 🎨 FRONTEND — React + Nginx
+  # ===============================
   wanderly-frontend:
     build:
-      context: ./travel       # ✅ points to the folder where Dockerfile-frontend is
+      context: ./travel-frontend
       dockerfile: Dockerfile-frontend
     ports:
-      - "5173:80"
+      - "5174:80"
     depends_on:
       - wanderly-backend
     restart: always
+    networks:
+      - wanderly-net
 
+  # ===============================
+  # ⚙️ BACKEND — Spring Boot
+  # ===============================
   wanderly-backend:
     build:
-      context: ./wanderly     # ✅ where your backend Dockerfile is
+      context: ./wanderly-backend
       dockerfile: Dockerfile-backend
     ports:
       - "8085:8085"
     depends_on:
       - wanderly-mysql
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://wanderly-mysql:3306/wanderly?createDatabaseIfNotExist=true
+      SPRING_DATASOURCE_URL: jdbc:mysql://wanderly-mysql:3306/wanderly?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: Vai@091005#
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: "true"
+      SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL: "true"
+      SPRING_SERVLET_MULTIPART_MAX-FILE-SIZE: 20MB
+      SPRING_SERVLET_MULTIPART_MAX-REQUEST-SIZE: 20MB
+    volumes:
+      - ./uploads:/app/uploads
     restart: always
+    networks:
+      - wanderly-net
 
+  # ===============================
+  # 🐬 DATABASE — MySQL
+  # ===============================
   wanderly-mysql:
     image: mysql:8
     environment:
@@ -35,6 +55,19 @@ services:
     volumes:
       - db_data:/var/lib/mysql
     restart: always
+    networks:
+      - wanderly-net
 
+# ===============================
+# 🔗 NETWORKS
+# ===============================
+networks:
+  wanderly-net:
+    driver: bridge
+
+# ===============================
+# 💾 VOLUMES
+# ===============================
 volumes:
   db_data:
+  uploads:
