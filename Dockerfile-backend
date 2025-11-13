@@ -1,0 +1,26 @@
+# ===============================
+# 🧱 Stage 1 — Build Spring Boot JAR
+# ===============================
+FROM maven:3.9.5-eclipse-temurin-21 AS build
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y git
+
+# Clone fresh latest commit from main branch
+RUN git clone --depth=1 --branch main https://github.com/vk-vaishnavi10/wanderlybe.git . \
+ && git pull origin main
+
+RUN mvn clean package -DskipTests
+
+# ===============================
+# 🚀 Stage 2 — Run Spring Boot app
+# ===============================
+FROM eclipse-temurin:21-jdk
+WORKDIR /app
+
+COPY --from=build /app/target/*.jar app.jar
+RUN mkdir -p /app/uploads/profile
+VOLUME ["/app/uploads"]
+
+EXPOSE 8085
+ENTRYPOINT ["java", "-jar", "app.jar"]

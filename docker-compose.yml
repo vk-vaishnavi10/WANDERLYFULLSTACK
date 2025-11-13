@@ -2,14 +2,13 @@ version: "3.8"
 
 services:
   # ===============================
-  # 🎨 FRONTEND — React + Nginx
+  # 🎨 FRONTEND — React + Nginx (DockerHub)
   # ===============================
   wanderly-frontend:
-    build:
-      context: ./travel-frontend
-      dockerfile: Dockerfile-frontend
+    image: vkvaishnavi10/wanderlyfs:v13
+    container_name: wanderly-frontend
     ports:
-      - "5174:80"
+      - "5173:80"
     depends_on:
       - wanderly-backend
     restart: always
@@ -17,12 +16,11 @@ services:
       - wanderly-net
 
   # ===============================
-  # ⚙️ BACKEND — Spring Boot
+  # ⚙️ BACKEND — Spring Boot (DockerHub)
   # ===============================
   wanderly-backend:
-    build:
-      context: ./wanderly-backend
-      dockerfile: Dockerfile-backend
+    image: vkvaishnavi10/wanderlybe:v20
+    container_name: wanderly-backend
     ports:
       - "8085:8085"
     depends_on:
@@ -34,8 +32,6 @@ services:
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_JPA_SHOW_SQL: "true"
       SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL: "true"
-      SPRING_SERVLET_MULTIPART_MAX-FILE-SIZE: 20MB
-      SPRING_SERVLET_MULTIPART_MAX-REQUEST-SIZE: 20MB
     volumes:
       - ./uploads:/app/uploads
     restart: always
@@ -47,6 +43,7 @@ services:
   # ===============================
   wanderly-mysql:
     image: mysql:8
+    container_name: wanderly-mysql
     environment:
       MYSQL_ROOT_PASSWORD: Vai@091005#
       MYSQL_DATABASE: wanderly
