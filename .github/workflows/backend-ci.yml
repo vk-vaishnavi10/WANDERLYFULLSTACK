@@ -6,7 +6,8 @@ on:
       - "wanderly/**"
       - "Dockerfile-backend"
       - ".github/workflows/backend-ci.yml"
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
   build:
@@ -24,6 +25,7 @@ jobs:
 
       - name: Build Backend Image
         run: |
+          cd wanderly
           docker build -f Dockerfile-backend -t wanderlybe .
 
       - name: Tag Image

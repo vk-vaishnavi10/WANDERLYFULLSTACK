@@ -6,7 +6,8 @@ on:
       - "travel/**"
       - "Dockerfile-frontend"
       - ".github/workflows/frontend-ci.yml"
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
   build:
@@ -24,6 +25,7 @@ jobs:
 
       - name: Build Frontend Image
         run: |
+          cd travel
           docker build -f Dockerfile-frontend -t wanderlyfs .
 
       - name: Tag Image
