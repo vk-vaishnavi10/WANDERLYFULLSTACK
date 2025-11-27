@@ -1,0 +1,38 @@
+---
+- name: "🚀 Setup Wanderly Infra (Docker + Minikube + K8s Deploy)"
+  hosts: servers
+  connection: local
+  become: false
+  gather_facts: no
+
+  tasks:
+
+    # -------------------------------
+    # Install kubectl & Minikube (Mac)
+    # -------------------------------
+    - name: Install kubectl
+      homebrew:
+        name: kubectl
+        state: present
+
+    - name: Install minikube
+      homebrew:
+        name: minikube
+        state: present
+
+    - name: Start Minikube (Docker driver)
+      shell: |
+        minikube start --driver=docker
+      args:
+        executable: /bin/zsh
+
+    # -------------------------------
+    # Apply Wanderly full-stack manifest
+    # -------------------------------
+    - name: Copy deployment file
+      copy:
+        src: ../k8s/fullstack-deployment.yaml
+        dest: ~/fullstack-deployment.yaml
+
+    - name: Deploy to Kubernetes
+      shell: kubectl apply -f ~/fullstack-deployment.yaml

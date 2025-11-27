@@ -1,0 +1,208 @@
+# ============================================================
+# 🧊 PVC for MySQL
+# ============================================================
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: wanderly-mysql-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+# ============================================================
+# 🐬 MYSQL DEPLOYMENT
+# ============================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wanderly-mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wanderly-mysql
+  template:
+    metadata:
+      labels:
+        app: wanderly-mysql
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: "Vai@091005#"
+            - name: MYSQL_DATABASE
+              value: "wanderly"
+          volumeMounts:
+            - name: mysql-storage
+              mountPath: /var/lib/mysql
+      volumes:
+        - name: mysql-storage
+          persistentVolumeClaim:
+            claimName: wanderly-mysql-pvc
+
+---
+# ============================================================
+# 🐬 MYSQL SERVICE
+# ============================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: wanderly-mysql
+spec:
+  selector:
+    app: wanderly-mysql
+  ports:
+    - name: mysql
+      port: 3306
+      targetPort: 3306
+  type: ClusterIP
+
+---
+# ============================================================
+# ⚙️ BACKEND DEPLOYMENT (Spring Boot)
+# ============================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wanderly-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wanderly-backend
+  template:
+    metadata:
+      labels:
+        app: wanderly-backend
+    spec:
+      containers:
+        - name: backend
+          image: vkvaishnavi10/k8swanderlybe:v6
+          ports:
+            - containerPort: 8085
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:mysql://wanderly-mysql:3306/wanderly?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "root"
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: "Vai@091005#"
+            - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+              value: "update"
+            - name: SPRING_JPA_SHOW_SQL
+              value: "true"
+
+            # ⭐ MISSING VARIABLE (CRITICAL FIX)
+            - name: WANDERLY_API_KEY
+              value: "${WANDERLY_API_KEY}"
+
+---
+# ============================================================
+# ⚙️ BACKEND SERVICE
+# ============================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: wanderly-backend-service
+spec:
+  selector:
+    app: wanderly-backend
+  type: NodePort
+  ports:
+    - port: 8085
+      targetPort: 8085
+      nodePort: 30090
+
+---
+# ============================================================
+# 🎨 FRONTEND NGINX CONFIGMAP
+# ============================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wanderly-frontend-nginx-config
+data:
+  default.conf: |
+    server {
+    listen 80;
+    server_name _;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # React Router
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Proxy to backend (K8s service name)
+    location /api/ {
+        proxy_pass http://wanderly-backend-service:8085/api/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    # Disable caching completely (important!)
+    add_header Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0";
+    add_header Pragma "no-cache";
+    add_header Expires "0";
+    }
+
+
+---
+# ============================================================
+# 🎨 FRONTEND DEPLOYMENT
+# ============================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wanderly-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wanderly-frontend
+  template:
+    metadata:
+      labels:
+        app: wanderly-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: vkvaishnavi10/k8swanderlyfe:v9
+
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/conf.d/default.conf
+              subPath: default.conf
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: wanderly-frontend-nginx-config
+
+---
+# ============================================================
+# 🎨 FRONTEND SERVICE
+# ============================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: wanderly-frontend-service
+spec:
+  selector:
+    app: wanderly-frontend
+  type: NodePort
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 30089

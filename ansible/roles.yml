@@ -1,0 +1,32 @@
+---
+# ============================================================
+# 🚀 ROLE: Install Kubernetes Tools (Mac)
+# ============================================================
+k8s_install:
+  - name: Install kubectl (Mac)
+    homebrew:
+      name: kubectl
+      state: present
+
+  - name: Install Minikube (Mac)
+    homebrew:
+      name: minikube
+      state: present
+
+  - name: Start Minikube (Mac)
+    shell: |
+      minikube start --driver=docker
+    args:
+      executable: /bin/zsh
+
+# ============================================================
+# 🚀 ROLE: Deploy Kubernetes Manifests
+# ============================================================
+k8s_deploy:
+  - name: Copy Kubernetes deployment file
+    copy:
+      src: ../k8s/fullstack-deployment.yaml
+      dest: ~/fullstack-deployment.yaml
+
+  - name: Apply Kubernetes deployment
+    shell: kubectl apply -f ~/fullstack-deployment.yaml

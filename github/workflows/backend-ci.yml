@@ -1,0 +1,35 @@
+name: 🚀 CI - Build & Push Backend
+
+on:
+  push:
+    paths:
+      - "wanderly/**"
+      - "Dockerfile-backend"
+      - ".github/workflows/backend-ci.yml"
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Build Backend Image
+        run: |
+          docker build -f Dockerfile-backend -t wanderlybe .
+
+      - name: Tag Image
+        run: |
+          docker tag wanderlybe:latest vkvaishnavi10/wanderlybe:latest
+
+      - name: Push Image to DockerHub
+        run: |
+          docker push vkvaishnavi10/wanderlybe:latest

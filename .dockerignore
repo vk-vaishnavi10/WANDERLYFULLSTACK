@@ -1,0 +1,29 @@
+# Ignore everything by default
+**
+
+# Include only frontend folder and needed files
+!travel
+!travel/package*.json
+!travel/src
+!travel/public
+!Dockerfile-frontend
+!nginx.conf
+
+# Exclude unnecessary large folders inside travel
+travel/node_modules
+travel/dist
+travel/.git
+travel/.cache
+travel/.vite
+travel/.output
+
+# Ignore backend
+wanderly/
+wanderlyFS/
+ansible/
+
+# Ignore IDE/system files
+*.log
+*.tmp
+*.swp
+.DS_Store

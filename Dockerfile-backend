@@ -1,14 +1,13 @@
 # ===============================
 # 🧱 Stage 1 — Build Spring Boot JAR
+# ====# ===============================
+# 🧱 Stage 1 — Build Spring Boot JAR
 # ===============================
 FROM maven:3.9.5-eclipse-temurin-21 AS build
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y git
-
-# Clone fresh latest commit from main branch
-RUN git clone --depth=1 --branch main https://github.com/vk-vaishnavi10/wanderlybe.git . \
- && git pull origin main
+# Copy your LOCAL backend code
+COPY wanderly/ .
 
 RUN mvn clean package -DskipTests
 
